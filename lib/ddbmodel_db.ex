@@ -64,10 +64,10 @@ defmodule DDBModel.DB do
         case validations do
           [] -> items = Enum.map records, fn(record) -> {table_name, [{:put, to_dynamo(record)} ]} end
                 case :erlcloud_ddb.batch_write_item(items) do
-                  {:ok, result}   -> {:ok, Enum.map records, fn (record) -> after_put(record) end}
+                  {:ok, result}   -> {:ok, Enum.map(records, fn (record) -> after_put(record) end)}
                   error           -> error
                 end
-            _  -> {:error, Enum.map validations, fn ({:error, err}) -> err end}
+            _  -> {:error, Enum.map(validations, fn ({:error, err}) -> err end)}
         end
       end
       
@@ -192,10 +192,8 @@ defmodule DDBModel.DB do
         case :erlcloud_ddb.batch_get_item({table_name, ids}) do
           {:ok, items}     -> result = Enum.map(items, fn(item) -> from_dynamo(item) end)
                               result = Enum.sort result, fn(r1, r2) ->
-                                (Enum.find_index ids, r1.id == &1) 
-                                  < 
-                                (Enum.find_index ids, r2.id == &1) 
-                               end
+                                Enum.find_index(ids, fn(x) -> x == r1.id end) < Enum.find_index(ids, fn(x) -> x == r2.id end)
+                              end
                               {:ok, result }
           error            -> error
         end
@@ -217,7 +215,7 @@ defmodule DDBModel.DB do
       defp query_q({:between, range_key1, range_key2}), do: {{range_key1, range_key2}, :between}
       defp query_q(nil), do: nil
       
-      def query(hash_key, predicate // nil, limit // nil, offset // nil, forward // true) do
+      def query(hash_key, predicate \\ nil, limit \\ nil, offset \\ nil, forward \\ true) do
         
         spec = [ scan_index_forward: forward,
                  out: :record,
@@ -228,7 +226,7 @@ defmodule DDBModel.DB do
         spec = Enum.filter spec, fn({k,v}) -> v != nil and v != [] end
        
         case :erlcloud_ddb.q(table_name,hash_key,spec) do
-          {:ok, {_,_,result,offset,_}} -> {:ok, offset, Enum.map( result, from_dynamo(&1))}
+          {:ok, {_,_,result,offset,_}} -> {:ok, offset, Enum.map( result, fn(x) -> from_dynamo(x) end)}
           error                   -> error
         end
       end
@@ -241,17 +239,17 @@ defmodule DDBModel.DB do
       defp scan_q({k,op,v}) when op in [:in,:eq,:ne,:le,:lt,:ge,:gt,:contains,:not_contains,:begins_with], do: {k, v, op}
       defp scan_q({k, :between, {v1, v2}}), do: {k, {v1, v2}, :between}
       
-      def scan(predicates // [], limit // nil, offset // nil) do
+      def scan(predicates \\ [], limit \\ nil, offset \\ nil) do
         
         spec = [ out: :record,
-                 scan_filter: Enum.map predicates, scan_q(&1),
+                 scan_filter: Enum.map(predicates, fn(x) -> scan_q(x) end),
                  exclusive_start_key: offset,
                  limit: limit]
                  
         spec = Enum.filter spec, fn({k,v}) -> v != nil and v != [] end                            
 
         case :erlcloud_ddb.scan(table_name, spec) do
-          {:ok,{_,result,_,_,offset,_}} -> {:ok, offset, Enum.map( result, from_dynamo(&1))}
+          {:ok,{_,result,_,_,offset,_}} -> {:ok, offset, Enum.map( result, fn(x) -> from_dynamo(x) end)}
           error -> error
         end
         
