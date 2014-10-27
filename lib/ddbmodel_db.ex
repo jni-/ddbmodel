@@ -5,7 +5,7 @@ defmodule DDBModel.DB do
       
       def to_dynamo(record={__MODULE__,dict}) do
         res = Enum.map model_columns, fn({k,opts}) ->
-          {atom_to_binary(k), to_dynamo(opts[:type], dict[k])}
+          {Atom.to_string(k), to_dynamo(opts[:type], dict[k])}
         end
         Enum.filter res, fn ({k,v}) -> v != nil and v != "" end
       end
@@ -13,13 +13,13 @@ defmodule DDBModel.DB do
       def from_dynamo(dict) do
         
         res = Enum.map model_columns, fn({k,opts}) ->
-          {k, from_dynamo(opts[:type], dict[atom_to_binary(k)])}
+          {k, from_dynamo(opts[:type], dict[Atom.to_string(k)])}
         end
         new(res)
       end
       
-      def to_dynamo(:atom, v),    do: atom_to_binary(v)
-      def from_dynamo(:atom, v),  do: binary_to_atom(v)
+      def to_dynamo(:atom, v),    do: Atom.to_string(v)
+      def from_dynamo(:atom, v),  do: String.to_atom(v)
       
       def to_dynamo(:json, nil),        do: "null"
       def from_dynamo(:json, "null"),   do: nil
@@ -99,8 +99,8 @@ defmodule DDBModel.DB do
       # expect that the record is new
       defp expect_not_exists do
         case key do
-          {hash, range} -> [expected: [{atom_to_binary(hash), false}, {atom_to_binary(range), false}]]
-          hash          -> [expected: {atom_to_binary(hash), false}]
+          {hash, range} -> [expected: [{Atom.to_string(hash), false}, {Atom.to_string(range), false}]]
+          hash          -> [expected: {Atom.to_string(hash), false}]
         end
       end
       
@@ -134,8 +134,8 @@ defmodule DDBModel.DB do
       
       defp expect_exists(k,i) do
         case {k,i} do
-          {{hash, range}, {hash_key, range_key}}  -> [expected: [{atom_to_binary(hash), hash_key }, {atom_to_binary(range), range_key }]]
-          {hash, hash_key} when is_atom(hash)     -> [expected: {atom_to_binary(hash), hash_key }]
+          {{hash, range}, {hash_key, range_key}}  -> [expected: [{Atom.to_string(hash), hash_key }, {Atom.to_string(range), range_key }]]
+          {hash, hash_key} when is_atom(hash)     -> [expected: {Atom.to_string(hash), hash_key }]
         end
       end
       

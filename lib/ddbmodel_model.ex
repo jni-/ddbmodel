@@ -19,7 +19,7 @@ defmodule DDBModel.Model do
       
       @doc "make record and init with default values"
       def new (attributes \\ []) do
-        {__MODULE__, HashDict.merge(HashDict.new(model_column_defaults), HashDict.new(attributes))}
+        {__MODULE__, HashDict.merge(Enum.into(model_column_defaults, HashDict.new), Enum.into(attributes, HashDict.new))}
       end
      
       @doc "update module from dict"
@@ -30,7 +30,7 @@ defmodule DDBModel.Model do
           nil -> attributes
           _   -> Enum.filter attributes, fn({k,_v}) -> Enum.any?(allowed_keys, fn(x) -> x == k end) end
         end
-        {__MODULE__, HashDict.merge(dict, HashDict.new(attributes))}
+        {__MODULE__, HashDict.merge(dict, Enum.into(attributes, HashDict.new))}
       end
       
       @doc "get the record id"
@@ -49,7 +49,7 @@ defmodule DDBModel.Model do
       def table_name do
         case :os.getenv('AWS_DYNAMO_DB_PREFIX') do
           false  -> inspect(__MODULE__)
-          prefix -> list_to_binary(prefix)  <> inspect(__MODULE__)
+          prefix -> List.to_string(prefix)  <> inspect(__MODULE__)
         end
       end
     end
