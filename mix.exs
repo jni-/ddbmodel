@@ -16,7 +16,6 @@ defmodule DDBModel.Mixfile do
   # { :foobar, "0.1", git: "https://github.com/elixir-lang/foobar.git" }
   defp deps do
     [ { :uuid, github: "avtobiff/erlang-uuid" },
-      { :meck, "~> 0.8.0", override: true },
       { :jsx, "~> 2.1.0", override: true },
       { :erlcloud, github: "gleber/erlcloud", branch: "master" }]
   end
