@@ -249,7 +249,7 @@ defmodule DDBModel.DB do
         spec = Enum.filter spec, fn({k,v}) -> v != nil and v != [] end                            
 
         case :erlcloud_ddb2.scan(table_name, spec) do
-          {:ok,{_,result,_,_,offset,_}} -> {:ok, offset, Enum.map( result, fn(x) -> from_dynamo(x) end)}
+          {:ok,{_,_,_,result,_,offset}} -> {:ok, offset, Enum.map( result, fn(x) -> from_dynamo(Enum.into(x, HashDict.new)) end)}
           error -> error
         end
         
